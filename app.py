@@ -3,6 +3,7 @@ import sqlite3
 import os
 import datetime
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from config import DevelopmentConfig, ProductionConfig
 
@@ -224,12 +225,11 @@ def student():
         cursor = connection.cursor()
 
         # Query the database for the student
-        cursor.execute("SELECT * FROM student WHERE student_id = ? AND password = ?", 
-                      (student_id, password))
+        cursor.execute("SELECT * FROM student WHERE student_id = ?", (student_id,))
         student_data = cursor.fetchone()
         connection.close()
 
-        if student_data:
+        if student_data and check_password_hash(student_data[4], password):
             # Store user information in session
             session.permanent = True
             session['logged_in'] = True
@@ -258,12 +258,11 @@ def teacher():
         cursor = connection.cursor()
 
         # Query for the teacher data
-        cursor.execute("SELECT * FROM teacher WHERE teacher_id = ? AND password = ?", 
-                       (teacher_id, password))
+        cursor.execute("SELECT * FROM teacher WHERE teacher_id = ?", (teacher_id,))
         teacher_data = cursor.fetchone()
         connection.close()
 
-        if teacher_data:
+        if teacher_data and check_password_hash(teacher_data[4], password):
             # Store user information in session
             session.permanent = True
             session['logged_in'] = True
@@ -292,7 +291,7 @@ def student_new():
         student_id = request.form.get("student_id")
         email = request.form.get("email")
         phone_number = request.form.get("phone_number")
-        password = request.form.get("password")
+        password = generate_password_hash(request.form.get("password"))
         student_gender = request.form.get("student_gender")
         student_dept = request.form.get("student_dept")
 
@@ -347,7 +346,7 @@ def teacher_new():
         teacher_id = request.form.get("teacher_id")
         email = request.form.get("email")
         phone_number = request.form.get("phone_number")
-        password = request.form.get("password")
+        password = generate_password_hash(request.form.get("password"))
         teacher_gender = request.form.get("teacher_gender")
         teacher_dept = request.form.get("teacher_dept")
 
